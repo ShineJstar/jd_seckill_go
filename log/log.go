@@ -1,10 +1,14 @@
 package log
 
 import (
+	"bytes"
+	"fmt"
 	"github.com/gookit/color"
 	"io"
 	"log"
 	"os"
+	"runtime"
+	"strconv"
 	"time"
 )
 
@@ -21,9 +25,18 @@ func Println(v ...interface{}) {
 	defer logFile.Close()
 	mw := io.MultiWriter(os.Stdout, logFile)
 	log.SetOutput(mw)
-	//log.SetPrefix("[jd_seckill]")
+	log.SetPrefix(fmt.Sprintf("[GOID:%d] ", getGID()))
 	log.SetFlags(log.LstdFlags | log.Lshortfile | log.Lmicroseconds)
-	log.Println(v...)
+	log.Output(2, fmt.Sprintln(v...))
+}
+
+func getGID() uint64 {
+	b := make([]byte, 64)
+	b = b[:runtime.Stack(b, false)]
+	b = bytes.TrimPrefix(b, []byte("goroutine "))
+	b = b[:bytes.IndexByte(b, ' ')]
+	n, _ := strconv.ParseUint(string(b), 10, 64)
+	return n
 }
 
 //将日志同时输出到控制台和文件
